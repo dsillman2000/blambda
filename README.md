@@ -1,7 +1,6 @@
 # blambda
 
-Boolean lambda calculus engine, written in Rust using [pest](https://pest.rs/) and [clap
-(https://github.com/clap-rs/clap)
+Boolean lambda calculus engine, written in Rust using [pest](https://pest.rs/) and [clap](https://github.com/clap-rs/clap)
 
 Provides a simple CLI, `blambda`, which can be used to parse a simple boolean lambda calculus specified below:
 
