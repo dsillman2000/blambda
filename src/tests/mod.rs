@@ -3,6 +3,8 @@ mod tests {
     use std::sync::Arc;
 
     use crate::blambda::eval::evaluate_expr;
+    use crate::blambda::format::format_expr;
+    use crate::blambda::format::format_program;
     use crate::blambda::parse::*;
     use crate::blambda::syntax::*;
     use crate::fallible_parse;
@@ -306,5 +308,126 @@ mod tests {
         };
         let value = evaluate_expr(expr);
         assert_eq!(value, None);
+    }
+
+    #[test]
+    fn test_format_expr_value() {
+        // Format true value expression
+        let expr = Expr::Value(true);
+        let formatted = format_expr(&expr);
+        assert_eq!(formatted, "t");
+
+        // Format false value expression
+        let expr = Expr::Value(false);
+        let formatted = format_expr(&expr);
+        assert_eq!(formatted, "f");
+    }
+
+    #[test]
+    fn test_format_expr_unary() {
+        // Format unary NOT expression
+        let expr = Expr::Unary {
+            op: UnOp::Not,
+            arg: Arc::new(Expr::Value(true)),
+        };
+        let formatted = format_expr(&expr);
+        assert_eq!(formatted, "(~ t)");
+    }
+
+    #[test]
+    fn test_format_expr_binary() {
+        // Format binary OR expression
+        let expr = Expr::Binary {
+            op: BinOp::Or,
+            arg1: Arc::new(Expr::Value(true)),
+            arg2: Arc::new(Expr::Value(false)),
+        };
+        let formatted = format_expr(&expr);
+        assert_eq!(formatted, "(t | f)");
+
+        // Format binary AND expression
+        let expr = Expr::Binary {
+            op: BinOp::And,
+            arg1: Arc::new(Expr::Value(true)),
+            arg2: Arc::new(Expr::Value(false)),
+        };
+        let formatted = format_expr(&expr);
+        assert_eq!(formatted, "(t & f)");
+    }
+
+    #[test]
+    fn test_format_expr_ternary() {
+        // Format ternary operator
+        let expr = Expr::Binary {
+            op: BinOp::Condition,
+            arg1: Arc::new(Expr::Value(true)),
+            arg2: Arc::new(Expr::Binary {
+                op: BinOp::Branch,
+                arg1: Arc::new(Expr::Value(false)),
+                arg2: Arc::new(Expr::Value(true)),
+            }),
+        };
+        let formatted = format_expr(&expr);
+        assert_eq!(formatted, "(t ? (f : t))");
+    }
+
+    #[test]
+    fn test_format_program() {
+        // Test format singleton program
+        let program = Program {
+            exprs: vec![Expr::Binary {
+                op: BinOp::Or,
+                arg1: Arc::new(Expr::Value(true)),
+                arg2: Arc::new(Expr::Value(false)),
+            }],
+        };
+        let formatted = format_program(&program);
+        assert_eq!(formatted, "(t | f)");
+
+        // Test format program with multiple expressions
+        let program = Program {
+            exprs: vec![
+                Expr::Binary {
+                    op: BinOp::Or,
+                    arg1: Arc::new(Expr::Value(true)),
+                    arg2: Arc::new(Expr::Value(false)),
+                },
+                Expr::Binary {
+                    op: BinOp::And,
+                    arg1: Arc::new(Expr::Value(true)),
+                    arg2: Arc::new(Expr::Value(false)),
+                },
+            ],
+        };
+        let formatted = format_program(&program);
+        assert_eq!(formatted, "(t | f) (t & f)");
+    }
+
+    #[test]
+    fn test_parse_format_expr_commutes() {
+        // Test that parsing and formatting an expression commutes
+        let inputs = vec!["t", "f", "(~ t)", "(f | f)", "(t & t)", "(t ? (f : t))"];
+        inputs.iter().for_each(|&input| {
+            let pairs = fallible_parse(Rule::expr, input).unwrap();
+            let expr = parse_expr(pairs);
+            let formatted = format_expr(&expr);
+            assert_eq!(formatted, input);
+        });
+    }
+
+    #[test]
+    fn test_parse_format_program_commutes() {
+        // Test that parsing and formatting a program commutes
+        let inputs = vec![
+            "(t | f)",
+            "(t | f) (t & f)",
+            "(t | f) (t & f) (t ? (f : t))",
+        ];
+        inputs.iter().for_each(|&input| {
+            let pairs = fallible_parse(Rule::program, input).unwrap();
+            let program = parse_program(pairs);
+            let formatted = format_program(&program);
+            assert_eq!(formatted, input);
+        });
     }
 }
