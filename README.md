@@ -30,4 +30,12 @@ blambda eval -s "(f | f | t) (t ? t : t) f"
 # 6
 ```
 
-Both of these commands can be used without the `-s` flag to read from a filepath instead.
+Moreover, a blambda program can be formatted using the `format` comand, which will return a formatted representation of the blambda program.
+
+```sh
+blambda format -s "t ? f : t | t & f f | t"
+
+# (t ? (f : ((t | t) & f))) (f | t)
+```
+
+All of these commands can be used without the `-s` flag to read from a filepath instead.
