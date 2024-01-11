@@ -1,0 +1,19 @@
+WHITESPACE = _{ " " | "\t" | NEWLINE }
+
+// Program is made up of one or more expressions
+program = { SOI ~ (expr)+ ~ EOI }
+// expressions can be prefixed or infixed together
+expr = { prefix? ~ primary ~ (infix ~ prefix? ~ primary)* }
+// infix operators
+infix     = _{ or | and | condition | branch }
+or        =  { "|" }
+and       =  { "&" }
+condition =  { "?" }
+branch    =  { ":" }
+// prefix operator
+prefix = _{ neg }
+neg    =  { "~" }
+// support for parenthesizing expressions
+primary = _{ boolval | "(" ~ expr ~ ")" }
+// terminal values, case-insensitive
+boolval = @{ ^"t" | ^"f" }
