@@ -6,6 +6,7 @@ mod tests;
 use std::io::Read;
 use std::result::Result;
 
+use crate::blambda::format::format_program;
 use crate::blambda::parse::Rule;
 use crate::blambda::{error::BlambdaError, eval::evaluate_program};
 use blambda::parse::BlambdaParser;
@@ -43,6 +44,23 @@ fn cli() -> BlambdaResult<()> {
         .subcommand(
             Command::new("eval")
                 .about("Evaluate a blambda program, returning the result")
+                .arg(
+                    Arg::new("stdin")
+                        .short('s')
+                        .help("Whether the input should be parsed from stdin")
+                        .required(false)
+                        .action(clap::ArgAction::SetTrue),
+                )
+                .arg(
+                    Arg::new("input or filepath")
+                        .help("The input or file to parse into an AST")
+                        .required(true)
+                        .index(1),
+                ),
+        )
+        .subcommand(
+            Command::new("format")
+                .about("Format a blambda program, returning the result")
                 .arg(
                     Arg::new("stdin")
                         .short('s')
@@ -109,6 +127,26 @@ fn cli() -> BlambdaResult<()> {
                 } else {
                     println!("Error: program could not be evaluated");
                 }
+                Ok(())
+            }
+        }
+        Some(("format", submatches)) => {
+            let from_stdin: bool = *submatches.get_one::<bool>("stdin").unwrap();
+            let input: &str = submatches.get_one::<String>("input or filepath").unwrap();
+
+            if !from_stdin {
+                let mut file = File::open(input).unwrap();
+                let mut contents: String = String::from("");
+                file.read_to_string(&mut contents)
+                    .map_err::<BlambdaError, _>(|e: std::io::Error| e.into())?;
+                let pairs = fallible_parse(Rule::program, &contents)?;
+                let program: Program = parse_program(pairs);
+                println!("{}", format_program(&program));
+                Ok(())
+            } else {
+                let pairs = fallible_parse(Rule::program, input)?;
+                let program: Program = parse_program(pairs);
+                println!("{}", format_program(&program));
                 Ok(())
             }
         }

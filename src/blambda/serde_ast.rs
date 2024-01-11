@@ -2,6 +2,8 @@ use serde::{ser::SerializeMap, Serialize};
 
 use crate::blambda::syntax::{BinOp, Expr, Program, UnOp};
 
+use super::error::BlambdaError;
+
 impl Serialize for Expr {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -60,4 +62,64 @@ impl Serialize for BinOp {
             BinOp::Branch => serializer.serialize_str("branch"),
         }
     }
+}
+
+trait BlambdaRepr {
+    fn blambda_repr(&self) -> String;
+}
+
+impl BlambdaRepr for bool {
+    fn blambda_repr(&self) -> String {
+        format!("{}", if *self { "t" } else { "f" })
+    }
+}
+
+impl BlambdaRepr for UnOp {
+    fn blambda_repr(&self) -> String {
+        match self {
+            UnOp::Not => "~".to_string(),
+        }
+    }
+}
+
+impl BlambdaRepr for BinOp {
+    fn blambda_repr(&self) -> String {
+        match self {
+            BinOp::Or => "|".to_string(),
+            BinOp::And => "&".to_string(),
+            BinOp::Condition => "?".to_string(),
+            BinOp::Branch => ":".to_string(),
+        }
+    }
+}
+
+pub fn serialize_expr(expr: &Expr) -> Result<String, BlambdaError> {
+    match expr {
+        Expr::Value(v) => Ok(v.blambda_repr()),
+        Expr::Unary { op, arg } => {
+            let arg = serialize_expr(arg)?;
+            Ok(format!("({} {})", op.blambda_repr(), arg))
+        }
+        Expr::Binary { op, arg1, arg2 } => {
+            let arg1 = serialize_expr(arg1)?;
+            let arg2 = serialize_expr(arg2)?;
+            Ok(format!("({} {} {})", arg1, op.blambda_repr(), arg2))
+        }
+    }
+}
+
+pub fn serialize_program(program: &Program) -> Result<String, BlambdaError> {
+    let mut exprs = Vec::new();
+    for expr in &program.exprs {
+        exprs.push(serialize_expr(expr)?);
+    }
+    Ok(format!(
+        "{}",
+        &program
+            .exprs
+            .iter()
+            .flat_map(|expr| serialize_expr(expr))
+            .collect::<Vec<String>>()
+            .join(" ")
+    ))
 }
