@@ -5,11 +5,11 @@ Boolean lambda calculus engine, written in Rust using [pest](https://pest.rs/) a
 
 Provides a simple CLI, `blambda`, which can be used to parse a simple boolean lambda calculus specified below:
 
-| Token Type         | Alternatives                                                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Value              | "t" or "f" (case-insensitive)                                                                                 |
-| Prefix operator(s) | "~ expr" (logical not)                                                                                        |
-| Infix operator(s)  | "expr \| expr" (logical or)<br>"expr & expr" (logical and)<br>"expr ? expr : expr" (logical ternary operator) |
+| Token Type         | Alternatives                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Value              | "t" or "f" (case-insensitive)                                                                                   |
+| Prefix operator(s) | "~ expr" (logical not)                                                                                          |
+| Infix operator(s)  | "expr \| expr" (logical or)<br>"expr & expr" (logical and)<br>"expr ? (expr : expr)" (logical ternary operator) |
 
 The AST of a set of expressions can be determined using
 
